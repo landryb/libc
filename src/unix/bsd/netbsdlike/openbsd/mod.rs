@@ -3,6 +3,7 @@ use unix::bsd::O_SYNC;
 pub type clock_t = i64;
 pub type suseconds_t = ::c_long;
 pub type dev_t = i32;
+pub type key_t = ::c_long;
 pub type sigset_t = ::c_uint;
 pub type blksize_t = i32;
 pub type fsblkcnt_t = u64;
@@ -305,6 +306,28 @@ s! {
         pub ar_hln: u8,
         pub ar_pln: u8,
         pub ar_op: u16,
+    }
+
+    pub struct ipc_perm {
+        pub cuid: ::uid_t,
+        pub cgid: ::gid_t,
+        pub uid: ::uid_t,
+        pub gid: ::gid_t,
+        pub mode: ::mode_t,
+        pub seq: ::c_ushort,
+        pub key: ::key_t,
+    }
+
+    pub struct shmid_ds {
+        pub shm_perm: ::ipc_perm,
+        pub shm_segsz: ::size_t,
+        pub shm_lpid: ::pid_t,
+        pub shm_cpid: ::pid_t,
+        pub shm_nattch: ::c_short,
+        pub shm_atime: ::time_t,
+        pub shm_dtime: ::time_t,
+        pub shm_ctime: ::time_t,
+        pub shm_internal: *mut ::c_void,
     }
 }
 
@@ -879,9 +902,16 @@ pub const SCM_TIMESTAMP: ::c_int = 0x04;
 
 pub const O_DSYNC: ::c_int = 128;
 
+pub const MAP_ANONYMOUS : ::c_int = 0x1000;
 pub const MAP_RENAME: ::c_int = 0x0000;
 pub const MAP_NORESERVE: ::c_int = 0x0000;
 pub const MAP_HASSEMAPHORE: ::c_int = 0x0000;
+
+pub const IPC_PRIVATE: ::key_t = 0;
+pub const IPC_CREAT: ::c_int = 0x1000;
+pub const IPC_EXCL: ::c_int = 0x2000;
+pub const IPC_NOWAIT: ::c_int = 0x4000;
+pub const IPC_RMID: ::c_int = 0;
 
 pub const EIPSEC: ::c_int = 82;
 pub const ENOMEDIUM: ::c_int = 85;
@@ -1454,6 +1484,13 @@ extern "C" {
         addr: caddr_t,
         data: ::c_int,
     ) -> ::c_int;
+
+    pub fn shmget(key: ::key_t, size: ::size_t, shmflg: ::c_int) -> ::c_int;
+    pub fn shmat(shmid: ::c_int, shmaddr: *const ::c_void,
+        shmflg: ::c_int) -> *mut ::c_void;
+    pub fn shmdt(shmaddr: *const ::c_void) -> ::c_int;
+    pub fn shmctl(shmid: ::c_int, cmd: ::c_int,
+        buf: *mut ::shmid_ds) -> ::c_int;
 }
 
 cfg_if! {
